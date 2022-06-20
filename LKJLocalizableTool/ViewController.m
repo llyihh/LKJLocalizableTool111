@@ -6,28 +6,30 @@
 //
 
 #import "ViewController.h"
-#import "AFNetworking/AFNetworking.h"
+#import "AFNetworking.h"
 
-#define SRC_PATH @"/Users/lyh/MyRepositories/LKJLocalizableTool/Localizable.strings"
-#define DST_PATH(tl) [NSString stringWithFormat:@"%@/tmp/%@/%@", SRC_PATH.stringByDeletingLastPathComponent, tl, SRC_PATH.lastPathComponent]
+#define SRC_PATH        [[NSBundle mainBundle] pathForResource:@"Localizable" ofType:@"strings"]
+#define DST_PATH(tl)    [NSString stringWithFormat:@"%@/lprojs/%@.txt", NSSearchPathForDirectoriesInDomains(NSDownloadsDirectory, NSUserDomainMask, YES).firstObject, tl]
 
 #define TO_LANGUAGES @{ \
-    /*@"en": @"英语",*/ \
-    @"zh-CN": @"中文（简体）", \
-    @"zh-TW": @"中文（繁体）", \
-    @"ja": @"日语", \
-    @"ru": @"俄语", \
-    @"de": @"德语", \
-    @"fr": @"法语", \
-    @"es": @"西班牙语", \
-    @"pt": @"葡萄牙语", \
-    @"ko": @"韩语", \
-    @"vi": @"越南语", \
-    @"th": @"泰语", \
-    @"ar": @"阿拉伯语", \
+    @"en": @"English # 英语", \
+    @"zh-CN": @"Chinese, Simplified # 中文（简体）", \
+    @"zh-TW": @"Chinese, Traditional # 中文（繁体）", \
+    @"ja": @"Japanese # 日语", \
+    @"ru": @"Russian # 俄语", \
+    @"de": @"German # 德语", \
+    @"fr": @"French # 法语", \
+    @"es": @"Spanish # 西班牙语", \
+    @"pt": @"Portuguese (Portugal) # 葡萄牙语", \
+    @"ko": @"Korean # 韩语", \
+    @"vi": @"Vietnamese # 越南语", \
+    @"th": @"Thai # 泰语", \
+    @"ar": @"Arabic # 阿拉伯语", \
+    @"it": @"Italian # 意大利语", \
+    @"hi": @"Hindi # 印地语", \
 }
 
-#define TRANSLATE_TEXT_URL @"http://47.88.31.120:80/translate/text"
+#define TRANSLATE_TEXT_URL_STRING @"http://47.88.31.120:80/translate/text"
 
 @implementation ViewController
 
@@ -35,8 +37,10 @@
     [super viewDidLoad];
 
     // Do any additional setup after loading the view.
-    NSString *srcContent = [NSString stringWithContentsOfFile:SRC_PATH encoding:NSUTF8StringEncoding error:nil];
-    NSArray *srcComponents = [[srcContent componentsSeparatedByString:@"\n"] filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"SELF BEGINSWITH '\"' && SELF CONTAINS ' = ' && SELF ENDSWITH '\";'"]];
+    NSString *srcContents = [NSString stringWithContentsOfFile:SRC_PATH encoding:NSUnicodeStringEncoding error:nil];
+    NSArray *srcComponents = [srcContents componentsSeparatedByString:@"\n"];
+    NSPredicate *srcPredicate = [NSPredicate predicateWithFormat:@"SELF BEGINSWITH '\"' && SELF CONTAINS ' = ' && SELF ENDSWITH '\";'"];
+    srcComponents = [srcComponents filteredArrayUsingPredicate:srcPredicate];
     NSMutableArray *srcValues = [NSMutableArray array];
     for (int i = 0; i < srcComponents.count; i++) {
         NSString *value = [srcComponents[i] componentsSeparatedByString:@" = "].lastObject;
@@ -44,36 +48,36 @@
         [srcValues addObject:value];
     }
     
-    NSMutableArray *texts = [NSMutableArray array];
+    NSMutableArray *originalTexts = [NSMutableArray array];
     NSInteger len = 128;
     for (int i = 0; i < ceil(1.f * srcValues.count / len); i++) {
         NSArray *obj = [srcValues subarrayWithRange:NSMakeRange(len * i, MIN(srcValues.count, len * (i + 1)) - len * i)];
-        NSData *data = [NSJSONSerialization dataWithJSONObject:obj options:0 error:nil];
+        NSData *data = [NSJSONSerialization dataWithJSONObject:obj options:kNilOptions error:nil];
         NSString *text = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        [texts addObject:text];
+        [originalTexts addObject:text];
     }
     
-    dispatch_group_t translateGroup = dispatch_group_create();
-    for (NSString *tl in TO_LANGUAGES.allKeys) {
-        dispatch_group_enter(translateGroup);
-        [self translateTexts:texts tl:tl completion:^(NSDictionary *responseTexts) {
-            NSString *dstPath = DST_PATH(([NSString stringWithFormat:@"%@ # %@", tl, TO_LANGUAGES[tl]]));
-            if (![NSFileManager.defaultManager fileExistsAtPath:dstPath.stringByDeletingLastPathComponent]) {
-                [NSFileManager.defaultManager createDirectoryAtPath:dstPath.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:nil];
+    dispatch_group_t originalGroup = dispatch_group_create();
+    [TO_LANGUAGES.allKeys enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        dispatch_group_enter(originalGroup);
+        [self translateTexts:originalTexts tl:obj completion:^(NSDictionary *responseTexts) {
+            NSString *dstPath = DST_PATH(TO_LANGUAGES[obj]);
+            if (![[NSFileManager defaultManager] fileExistsAtPath:dstPath.stringByDeletingLastPathComponent]) {
+                [[NSFileManager defaultManager] createDirectoryAtPath:dstPath.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:nil];
             }
-            if ([NSFileManager.defaultManager fileExistsAtPath:dstPath]) {
-                [NSFileManager.defaultManager removeItemAtPath:dstPath error:nil];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:dstPath]) {
+                [[NSFileManager defaultManager] removeItemAtPath:dstPath error:nil];
             }
-            NSMutableString *dstContent = [srcContent mutableCopy];
+            NSMutableString *dstContents = [srcContents mutableCopy];
             [responseTexts enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
-                [dstContent replaceOccurrencesOfString:key withString:obj options:0 range:NSMakeRange(0, dstContent.length)];
+                [dstContents replaceOccurrencesOfString:key withString:obj options:kNilOptions range:NSMakeRange(0, dstContents.length)];
             }];
-            [dstContent writeToFile:dstPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
-            NSLog(@"%@ 🎉🎉!! src: %ld, dst: %ld", dstPath.stringByDeletingLastPathComponent.lastPathComponent, srcValues.count, responseTexts.count);
-            dispatch_group_leave(translateGroup);
+            [dstContents writeToFile:dstPath atomically:NO encoding:NSUnicodeStringEncoding error:nil];
+            NSLog(@"%@ ✅", TO_LANGUAGES[obj]);
+            dispatch_group_leave(originalGroup);
         }];
-    }
-    dispatch_group_notify(translateGroup, dispatch_get_main_queue(), ^{
+    }];
+    dispatch_group_notify(originalGroup, dispatch_get_main_queue(), ^{
         exit(0);
     });
 }
@@ -88,15 +92,15 @@
             @"to": tl,
         };
         dispatch_group_enter(responseGroup);
-        [[AFHTTPSessionManager manager] POST:TRANSLATE_TEXT_URL parameters:parameters headers:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-            for (NSDictionary *obj in responseObject[@"data"]) {
+        [[AFHTTPSessionManager manager] POST:TRANSLATE_TEXT_URL_STRING parameters:parameters headers:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            [responseObject[@"data"] enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
                 NSString *originalText = [NSString stringWithFormat:@"\"%@\";", obj[@"originalText"]];
                 NSString *text = [NSString stringWithFormat:@"\"%@\";", obj[@"text"]];
                 responseTexts[originalText] = text;
-            }
+            }];
             dispatch_group_leave(responseGroup);
         } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-            NSLog(@"tl: %@, error: %@", tl, error);
+            NSLog(@"%@ ❎\n%@", TO_LANGUAGES[tl], error);
             dispatch_group_leave(responseGroup);
         }];
     }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1466C69327BE987E004FDC43 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1466C69227BE987E004FDC43 /* Localizable.strings */; };
 		1486F61D2769BCFE00212F95 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 1486F61C2769BCFE00212F95 /* AppDelegate.m */; };
 		1486F6202769BCFE00212F95 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1486F61F2769BCFE00212F95 /* ViewController.m */; };
 		1486F6222769BD0200212F95 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1486F6212769BD0200212F95 /* Assets.xcassets */; };
@@ -21,6 +22,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1466C69227BE987E004FDC43 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
 		1486F6182769BCFE00212F95 /* LKJLocalizableTool.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LKJLocalizableTool.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1486F61B2769BCFE00212F95 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		1486F61C2769BCFE00212F95 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -76,7 +78,6 @@
 		1486F61A2769BCFE00212F95 /* LKJLocalizableTool */ = {
 			isa = PBXGroup;
 			children = (
-				1486F62E2769C2B200212F95 /* AFNetworking */,
 				1486F61B2769BCFE00212F95 /* AppDelegate.h */,
 				1486F61C2769BCFE00212F95 /* AppDelegate.m */,
 				1486F61E2769BCFE00212F95 /* ViewController.h */,
@@ -85,6 +86,8 @@
 				1486F6232769BD0200212F95 /* Main.storyboard */,
 				1486F6262769BD0200212F95 /* main.m */,
 				1486F6282769BD0200212F95 /* LKJLocalizableTool.entitlements */,
+				1486F62E2769C2B200212F95 /* AFNetworking */,
+				1466C69227BE987E004FDC43 /* Localizable.strings */,
 			);
 			path = LKJLocalizableTool;
 			sourceTree = "<group>";
@@ -168,6 +171,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1486F6222769BD0200212F95 /* Assets.xcassets in Resources */,
+				1466C69327BE987E004FDC43 /* Localizable.strings in Resources */,
 				1486F6252769BD0200212F95 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
